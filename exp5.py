@@ -145,4 +145,100 @@ def test_main(args, LOG_DIR, EPOCHS, MAX_BATCHES_PER_EPOCH):
 if not args.plot:
     test_main(args, LOG_DIR, EPOCHS, MAX_BATCHES_PER_EPOCH)
 else:
-    pass
+    # Temporarily put the import functions here to avoid
+    # random error stops the running processes.
+    import os
+    import pandas as pd
+    import matplotlib.pyplot as plt
+    import seaborn as sns
+    from codes.parser import extract_validation_entries
+
+    def exp_grid():
+        for attack in ["BF", "LF", "mimic", "IPM", "ALIE"]:
+            for momentum in [0.0, 0.5, 0.9, 0.99]:
+                yield attack, momentum
+
+    results = []
+    for attack, momentum in exp_grid():
+        grid_identifier = f"{attack}_{momentum}_seed0"
+        path = INP_DIR + grid_identifier + "/stats"
+        try:
+            values = extract_validation_entries(path, kw="g_size")
+            for v in values:
+                rank = v["rank"]
+                norm = v["norm"]
+                results.append(
+                    {
+                        "Worker ID": rank,
+                        "norm": norm,
+                        "attack": attack,
+                        r"$\beta$": str(momentum),
+                        "Iterations": v["E"] * MAX_BATCHES_PER_EPOCH + v["B"],
+                    }
+                )
+        except Exception as e:
+            pass
+
+    results = pd.DataFrame(results)
+    print(results)
+
+    if not os.path.exists(OUT_DIR):
+        os.makedirs(OUT_DIR)
+
+    # g = sns.relplot(
+    #     data=results,
+    #     x="Worker ID",
+    #     y="norm",
+    #     col="attack",
+    #     hue=r"$\beta$",
+    #     # hue="Momentum",
+    #     kind="line",
+    #     ci=None,
+    #     height=2.5,
+    #     aspect=1.3,
+    # )
+    # g.set(xlim=(0, 19), ylim=(0, 1000), yscale="log")
+    # g.fig.savefig(OUT_DIR + "exp5.pdf", bbox_inches="tight")
+
+    a = (
+        results.groupby(["attack", r"$\beta$", "Worker ID"])
+        .mean()["norm"]
+        .reset_index()
+    )
+
+    b = a.copy()
+    result = []
+    for rank in range(20):
+        for attack in ["BF", "LF", "mimic", "IPM", "ALIE"]:
+            _b = b[(b["Worker ID"] == rank) & (b["attack"] == attack)]
+            v = _b[_b[r"$\beta$"] == str(0.0)].iloc[0]["norm"]
+            for beta in [0.0, 0.5, 0.9, 0.99]:
+                result.append(
+                    {
+                        "Worker ID": rank,
+                        "ATK": attack,
+                        r"$\beta$": str(beta),
+                        "Norm ratio": _b[_b[r"$\beta$"] == str(beta)].iloc[0]["norm"]
+                        / v,
+                        "Norm": _b[_b[r"$\beta$"] == str(beta)].iloc[0]["norm"],
+                    }
+                )
+
+    result = pd.DataFrame(result)
+    print(result)
+
+    sns.set(font_scale=1.25)
+    g = sns.relplot(
+        data=result,
+        x="Worker ID",
+        y="Norm ratio",
+        col="ATK",
+        hue=r"$\beta$",
+        # hue="Momentum",
+        kind="line",
+        ci=None,
+        height=2.5,
+        aspect=1,
+    )
+    g.set(xlim=(0, 19), ylim=(0, 100), yscale="log")
+    g.fig.savefig(OUT_DIR + "exp5.pdf", bbox_inches="tight")

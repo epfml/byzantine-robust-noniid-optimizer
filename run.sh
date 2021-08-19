@@ -155,8 +155,26 @@ function run_exp4 {
 }
 
 
+function run_exp5 {
+    COMMON_OPTIONS="--use-cuda --identifier all -n 25 -f 5 --noniid"
+    for atk in "BF" "LF" "mimic" "IPM" "ALIE"
+    do
+        for m in 0 0.5 0.9 0.99
+        do
+            python exp5.py $COMMON_OPTIONS --attack $atk --agg "cp" --bucketing 0 --seed 0 --momentum $m &
+            pids[$!]=$!
+        done
+
+        # wait for all pids
+        for pid in ${pids[*]}; do
+            wait $pid
+        done
+        unset pids
+    done
+}
+
 PS3='Please enter your choice: '
-options=("debug" "exp1" "exp1_plot" "run_exp1_addon" "exp2" "exp2_plot" "run_exp2_addon" "exp3" "exp3_plot" "exp4" "Quit")
+options=("debug" "exp1" "exp1_plot" "run_exp1_addon" "exp2" "exp2_plot" "run_exp2_addon" "exp3" "exp3_plot" "exp4" "exp5" "Quit")
 select opt in "${options[@]}"
 do
     case $opt in
@@ -196,6 +214,10 @@ do
 
         "exp4")
             run_exp4
+            ;;
+
+        "exp5")
+            run_exp5
             ;;
 
         "Quit")

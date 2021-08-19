@@ -206,7 +206,7 @@ function run_exp6 {
 
 
 PS3='Please enter your choice: '
-options=("debug" "exp1" "exp1_plot" "run_exp1_addon" "exp2" "exp2_plot" "run_exp2_addon" "exp3" "exp3_plot" "exp4" "exp5" "exp6" "Quit")
+options=("debug" "exp1" "exp1_plot" "run_exp1_addon" "exp2" "exp2_plot" "run_exp2_addon" "exp3" "exp3_plot" "exp4" "exp4_plot" "exp5" "exp6" "Quit")
 select opt in "${options[@]}"
 do
     case $opt in
@@ -246,6 +246,11 @@ do
 
         "exp4")
             run_exp4
+            ;;
+
+        "exp4_plot")
+            COMMON_OPTIONS="--use-cuda --identifier all -n 53 --noniid"
+            python exp4.py $COMMON_OPTIONS -f 5 --attack "IPM" --plot
             ;;
 
         "exp5")

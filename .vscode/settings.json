@@ -25,7 +25,8 @@
         "**/__pycache__",
         "**/*.tmp",
         "**/datasets",
-        "**/outputs"
+        "**/outputs",
+        "**/.git"
     ],
     "sync-rsync.args": [
         "-avz",

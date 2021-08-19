@@ -124,6 +124,37 @@ function run_exp3 {
 }
 
 
+function run_exp4 {
+    COMMON_OPTIONS="--use-cuda --identifier all -n 53 --noniid"
+    for seed in 0 1 2
+    do
+        for s in 0 2 5
+        do
+            for m in 0 0.9
+            do
+                python exp4.py $COMMON_OPTIONS -f 5 --attack "IPM" --agg "cp" --bucketing $s --seed $seed --momentum $m &
+                pids[$!]=$!
+            done
+        done
+
+        for f in 1 6 12
+        do
+            for m in 0 0.9
+            do
+                python exp4.py $COMMON_OPTIONS -f $f --attack "IPM" --agg "cp" --bucketing 2 --seed $seed --momentum $m &
+                pids[$!]=$!
+            done
+        done
+
+        # wait for all pids
+        for pid in ${pids[*]}; do
+            wait $pid
+        done
+        unset pids
+    done
+}
+
+
 PS3='Please enter your choice: '
 options=("debug" "exp1" "exp1_plot" "run_exp1_addon" "exp2" "exp2_plot" "run_exp2_addon" "exp3" "exp4" "Quit")
 select opt in "${options[@]}"
@@ -156,6 +187,10 @@ do
 
         "exp3")
             run_exp3
+            ;;
+
+        "exp4")
+            run_exp4
             ;;
 
         "Quit")

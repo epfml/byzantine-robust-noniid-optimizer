@@ -79,6 +79,14 @@ def get_args():
         "--mimic-warmup", type=int, default=1, help="the warmup phase in iterations."
     )
 
+    parser.add_argument(
+        "--op",
+        type=int,
+        default=1,
+        help="[HP] controlling the degree of overparameterization. "
+        "Only used in exp8.",
+    )
+
     args = parser.parse_args()
 
     if args.n <= 0 or args.f < 0 or args.f >= args.n:

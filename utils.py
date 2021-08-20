@@ -108,10 +108,9 @@ def _get_aggregator(args):
         return CM()
 
     if args.agg == "cp":
-        if args.momentum == 0:
-            assert args.clip_scaling is None
+        if args.clip_scaling is None:
             tau = args.clip_tau
-        elif args.clip_scaling == "linear" or args.clip_scaling == None:
+        elif args.clip_scaling == "linear":
             tau = args.clip_tau / (1 - args.momentum)
         elif args.clip_scaling == "sqrt":
             tau = args.clip_tau / np.sqrt(1 - args.momentum)

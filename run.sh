@@ -204,9 +204,32 @@ function run_exp6 {
     done
 }
 
+function run_exp6_addon {
+    # TODO: delete after completion
+    # Fix the bug for clip_scaling is None with momentum > 0
+    COMMON_OPTIONS="--use-cuda --identifier all -n 25 -f 5 --noniid"
+    for atk in "BF" "LF" "mimic" "IPM" "ALIE"
+    do
+        for s in 0 2
+        do
+            for m in 0.5 0.9 0.99
+            do
+                python exp6.py $COMMON_OPTIONS --attack $atk --agg "cp" --bucketing $s --seed 0 --momentum $m &
+                pids[$!]=$!                
+            done
+        done
+
+        # wait for all pids
+        for pid in ${pids[*]}; do
+            wait $pid
+        done
+        unset pids
+    done
+}
+
 
 PS3='Please enter your choice: '
-options=("debug" "exp1" "exp1_plot" "run_exp1_addon" "exp2" "exp2_plot" "run_exp2_addon" "exp3" "exp3_plot" "exp4" "exp4_plot" "exp5" "exp5_plot" "exp6" "Quit")
+options=("debug" "exp1" "exp1_plot" "run_exp1_addon" "exp2" "exp2_plot" "run_exp2_addon" "exp3" "exp3_plot" "exp4" "exp4_plot" "exp5" "exp5_plot" "exp6" "exp6_plot" "run_exp6_addon" "Quit")
 select opt in "${options[@]}"
 do
     case $opt in
@@ -264,6 +287,15 @@ do
 
         "exp6")
             run_exp6
+            ;;
+
+        "exp6_plot")
+            COMMON_OPTIONS="--use-cuda --identifier all -n 25 -f 5 --noniid"
+            python exp6.py $COMMON_OPTIONS --attack "IPM" --agg "cp" --plot
+            ;;
+
+        "run_exp6_addon")
+            run_exp6_addon
             ;;
 
         "Quit")

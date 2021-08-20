@@ -220,10 +220,10 @@ else:
         # ci=None,
         # height=2.5, aspect=1.3,
     )
-    g.set(xlim=(0, 19.5), ylim=(0, 500))
-    g.text(14, 450, "Benign", fontsize=9, color="r")
-    g.text(16.5, 450, "Byzantine", fontsize=9, color="r")
-    plt.axvline(x=16.5, color="r", linewidth=1, linestyle=":")
+    g.set(xlim=(-0.5, 19.5), ylim=(0, 700))
+    g.text(15, 650, "Benign", fontsize=7, color="r")
+    g.text(17.5, 650, "Byzantine", fontsize=7, color="r")
+    plt.axvline(x=17.5, color="r", linewidth=1, linestyle=":")
     plt.legend(bbox_to_anchor=(1.01, 1), loc=2, borderaxespad=0.0)
     plt.tight_layout()
     g.figure.savefig(OUT_DIR + "exp7.pdf", bbox_inches="tight")

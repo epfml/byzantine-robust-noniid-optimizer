@@ -227,9 +227,23 @@ function run_exp6_addon {
     done
 }
 
+function run_exp7 {
+    COMMON_OPTIONS="--use-cuda --identifier all -n 20 -f 2 --noniid"
+    for s in 0 2 3
+    do
+        python exp7.py $COMMON_OPTIONS --attack "LF" --agg "krum" --bucketing $s --seed 0 --momentum 0 &
+        pids[$!]=$!
+    done
+
+    # wait for all pids
+    for pid in ${pids[*]}; do
+        wait $pid
+    done
+    unset pids
+}
 
 PS3='Please enter your choice: '
-options=("debug" "exp1" "exp1_plot" "run_exp1_addon" "exp2" "exp2_plot" "run_exp2_addon" "exp3" "exp3_plot" "exp4" "exp4_plot" "exp5" "exp5_plot" "exp6" "exp6_plot" "run_exp6_addon" "Quit")
+options=("debug" "exp1" "exp1_plot" "run_exp1_addon" "exp2" "exp2_plot" "run_exp2_addon" "exp3" "exp3_plot" "exp4" "exp4_plot" "exp5" "exp5_plot" "exp6" "exp6_plot" "run_exp6_addon" "run_exp7" "Quit")
 select opt in "${options[@]}"
 do
     case $opt in
@@ -296,6 +310,10 @@ do
 
         "run_exp6_addon")
             run_exp6_addon
+            ;;
+
+        "run_exp7")
+            run_exp7
             ;;
 
         "Quit")

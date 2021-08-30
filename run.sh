@@ -26,26 +26,6 @@ function run_exp1 {
     done
 }
 
-function run_exp1_addon {
-    # TODO: Delete the function after the experiment is done.
-    # This part of exp1 is redone because of a bug.
-    COMMON_OPTIONS="--use-cuda --identifier all -n 24 -f 0 --attack NA --LT"
-    for seed in 0 1 2
-    do
-        python exp1.py $COMMON_OPTIONS --agg "krum" --bucketing 2 --seed $seed &
-        pids[$!]=$!
-
-        python exp1.py $COMMON_OPTIONS --agg "krum" --noniid --bucketing 2 --seed $seed &
-        pids[$!]=$!
-    done
-
-    # wait for all pids
-    for pid in ${pids[*]}; do
-        wait $pid
-    done
-    unset pids
-}
-
 function exp1_plot {
     COMMON_OPTIONS="--use-cuda --identifier all -n 24 -f 0 --attack NA --LT"
     python exp1.py $COMMON_OPTIONS --plot
@@ -73,26 +53,6 @@ function run_exp2 {
             unset pids
         done
     done
-}
-
-function run_exp2_addon {
-    # TODO: Delete the function after the experiment is done.
-    # This part of exp1 is redone because of a bug.
-    COMMON_OPTIONS="--use-cuda --identifier all -n 25 -f 5 --attack mimic"
-    for seed in 0 1 2
-    do
-        python exp2.py $COMMON_OPTIONS --agg "krum" --bucketing 2 --seed $seed &
-        pids[$!]=$!
-
-        python exp2.py $COMMON_OPTIONS --agg "krum" --noniid --bucketing 2 --seed $seed &
-        pids[$!]=$!
-    done
-
-    # wait for all pids
-    for pid in ${pids[*]}; do
-        wait $pid
-    done
-    unset pids
 }
 
 
@@ -204,30 +164,8 @@ function run_exp6 {
     done
 }
 
-function run_exp6_addon {
-    # TODO: delete after completion
-    # Fix the bug for clip_scaling is None with momentum > 0
-    COMMON_OPTIONS="--use-cuda --identifier all -n 25 -f 5 --noniid"
-    for atk in "BF" "LF" "mimic" "IPM" "ALIE"
-    do
-        for s in 0 2
-        do
-            for m in 0.5 0.9 0.99
-            do
-                python exp6.py $COMMON_OPTIONS --attack $atk --agg "cp" --bucketing $s --seed 0 --momentum $m &
-                pids[$!]=$!                
-            done
-        done
 
-        # wait for all pids
-        for pid in ${pids[*]}; do
-            wait $pid
-        done
-        unset pids
-    done
-}
-
-function run_exp7 {
+function exp7 {
     COMMON_OPTIONS="--use-cuda --identifier all -n 20 -f 2 --noniid"
     for seed in 0 1 2
     do
@@ -244,24 +182,10 @@ function run_exp7 {
     done
 }
 
-function run_exp7_addon {
-    COMMON_OPTIONS="--use-cuda --identifier all -n 20 -f 2 --noniid"
-    for seed in 0 1 2
-    do
-        python exp7.py $COMMON_OPTIONS --attack "LF" --agg "krum" --bucketing 0 --seed $seed --momentum 0 &
-        pids[$!]=$!
-    done
-
-    # wait for all pids
-    for pid in ${pids[*]}; do
-        wait $pid
-    done
-    unset pids
-}
 
 function run_exp8 {
-    COMMON_OPTIONS="--use-cuda --identifier all -n 25 -f 5 --noniid"
-    for op in 1 2 4 8
+    COMMON_OPTIONS="--use-cuda --identifier all -n 20 -f 3 --noniid"
+    for op in 8 4 2 1
     do
         for s in 0 2 3
         do
@@ -270,18 +194,19 @@ function run_exp8 {
                 python exp8.py $COMMON_OPTIONS --attack $atk --agg "rfa" --bucketing $s --seed 0 --momentum 0 --op $op &
                 pids[$!]=$!
             done
+
+            # wait for all pids
+            for pid in ${pids[*]}; do
+                wait $pid
+            done
+            unset pids
         done
-        # wait for all pids
-        for pid in ${pids[*]}; do
-            wait $pid
-        done
-        unset pids
     done
 }
 
 
 PS3='Please enter your choice: '
-options=("debug" "exp1" "exp1_plot" "run_exp1_addon" "exp2" "exp2_plot" "run_exp2_addon" "exp3" "exp3_plot" "exp4" "exp4_plot" "exp5" "exp5_plot" "exp6" "exp6_plot" "run_exp6_addon" "run_exp7" "exp7_plot" "run_exp7_addon" "exp8" "Quit")
+options=("debug" "exp1" "exp1_plot" "exp2" "exp2_plot" "exp3" "exp3_plot" "exp4" "exp4_plot" "exp5" "exp5_plot" "exp6" "exp6_plot" "exp7" "exp7_plot" "exp8" "exp8_plot" "Quit")
 select opt in "${options[@]}"
 do
     case $opt in
@@ -293,10 +218,6 @@ do
             exp1_plot
             ;;
 
-        "run_exp1_addon")
-            run_exp1_addon
-            ;;
-        
         "exp2")
             run_exp2
             ;;
@@ -304,10 +225,6 @@ do
         "exp2_plot")
             COMMON_OPTIONS="--use-cuda --identifier all -n 25 -f 5 --attack mimic"
             python exp2.py $COMMON_OPTIONS --plot
-            ;;
-
-        "run_exp2_addon")
-            run_exp2_addon
             ;;
 
         "exp3")
@@ -346,12 +263,8 @@ do
             python exp6.py $COMMON_OPTIONS --attack "IPM" --agg "cp" --plot
             ;;
 
-        "run_exp6_addon")
-            run_exp6_addon
-            ;;
-
-        "run_exp7")
-            run_exp7
+        "exp7")
+            exp7
             ;;
         
         "exp7_plot")
@@ -359,13 +272,13 @@ do
             python exp7.py $COMMON_OPTIONS --attack "LF" --agg "krum" --plot
             ;;
 
-        "run_exp7_addon")
-            run_exp7_addon
-            ;;
-
-
         "exp8")
             run_exp8
+            ;;
+
+        "exp8_plot")
+            COMMON_OPTIONS="--use-cuda --identifier all -n 25 -f 5 --noniid"
+            python exp8.py $COMMON_OPTIONS --attack "LF" --agg "rfa" --plot
             ;;
 
         "Quit")

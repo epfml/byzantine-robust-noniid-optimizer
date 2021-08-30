@@ -179,28 +179,25 @@ else:
     from codes.parser import extract_validation_entries
 
     def exp_grid():
-        for seed in [0, 1, 2]:
-            for bucketing in [0, 2, 3]:
-                for op in [1, 2, 4, 8]:
-                    for attack in ["BF", "LF", "mimic", "IPM", "ALIE"]:
-                        yield agg, attack, momentum, bucketing, seed
+        for bucketing in [0, 2, 3]:
+            for op in [1, 2, 4, 8]:
+                for attack in ["BF", "LF", "mimic", "IPM", "ALIE"]:
+                    yield attack, bucketing, op
 
     results = []
-    for agg, attack, momentum, bucketing, seed in exp_grid():
-        grid_identifier = f"{agg}_{attack}_{momentum}_s{bucketing}_seed{seed}"
+    for attack, bucketing, op in exp_grid():
+        grid_identifier = f"{attack}_s{bucketing}_{op}_seed0"
         path = INP_DIR + grid_identifier + "/stats"
         try:
-            values = extract_validation_entries(path)
+            values = extract_validation_entries(path, kw="train evaluator")
             for v in values:
                 results.append(
                     {
                         "Iterations": v["E"] * MAX_BATCHES_PER_EPOCH,
-                        "Accuracy (%)": v["top1"],
+                        "Train Loss": v["Loss"] if v["Loss"] != "nan" else np.inf,
                         "ATK": attack,
-                        "AGG": agg.upper() if agg != "cp" else "CClip",
-                        "Momentum": momentum,
-                        "seed": seed,
-                        "Bucketing": str(bucketing),
+                        "Model Scale": str(op),
+                        "s": str(bucketing),
                     }
                 )
         except Exception as e:
@@ -208,26 +205,25 @@ else:
 
     results = pd.DataFrame(results)
     print(results)
+    print(results.dtypes)
 
     if not os.path.exists(OUT_DIR):
         os.makedirs(OUT_DIR)
-
-    results.to_csv(OUT_DIR + "exp3.csv", index=None)
 
     sns.set(font_scale=1.25)
     g = sns.relplot(
         data=results,
         x="Iterations",
-        y="Accuracy (%)",
-        col="AGG",
-        style="Momentum",
-        row="ATK",
-        hue="Bucketing",
+        y="Train Loss",
+        col="ATK",
+        # style="Momentum",
+        row="s",
+        hue="Model Scale",
         height=2.5,
         aspect=1.3,
         # legend=False,
         # ci=None,
         kind="line",
     )
-    g.set(xlim=(0, 600), ylim=(0, 100))
-    g.fig.savefig(OUT_DIR + "exp3.pdf", bbox_inches="tight")
+    g.set(xlim=(0, 3000), ylim=(0, 1))
+    g.fig.savefig(OUT_DIR + "exp8.pdf", bbox_inches="tight")

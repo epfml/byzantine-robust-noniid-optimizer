@@ -93,6 +93,7 @@ else:
 
     results.to_csv(OUT_DIR + "exp4_fix_f.csv", index=None)
 
+    plt.figure(figsize=(6, 3))
     sns.set(font_scale=1.25)
     g = sns.lineplot(
         data=results,
@@ -143,6 +144,7 @@ else:
 
     results.to_csv(OUT_DIR + "exp4_fix_s.csv", index=None)
 
+    plt.figure(figsize=(6, 3))
     sns.set(font_scale=1.25)
     g = sns.lineplot(
         data=results,
@@ -151,7 +153,7 @@ else:
         style="Momentum",
         hue="f",
         # height=2.5,
-        # aspect=1.3,
+        # aspect=2,
         # legend=False,
         # ci=None,
     )

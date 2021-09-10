@@ -90,17 +90,17 @@ else:
 
     results.to_csv(OUT_DIR + "exp3.csv", index=None)
 
-    sns.set(font_scale=1.25)
+    sns.set(font_scale=1.7)
     g = sns.relplot(
         data=results,
         x="Iterations",
         y="Accuracy (%)",
-        col="AGG",
         style="Momentum",
-        row="ATK",
+        col="ATK",
+        row="AGG",
         hue="Bucketing",
         height=2.5,
-        aspect=1.3,
+        aspect=2.0,
         # legend=False,
         # ci=None,
         kind="line",

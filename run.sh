@@ -205,8 +205,39 @@ function run_exp8 {
 }
 
 
+function run_exp9 {
+    COMMON_OPTIONS="--use-cuda --identifier all -n 20 -f 3 --noniid"
+    for op in 8 4 2 1
+    do
+        for s in 0 2 3
+        do
+            CUDA_VISIBLE_DEVICES=0 python exp9.py $COMMON_OPTIONS --attack "BF" --agg "rfa" --bucketing $s --seed 0 --momentum 0 --op $op &
+            pids[$!]=$!
+
+            CUDA_VISIBLE_DEVICES=1 python exp9.py $COMMON_OPTIONS --attack "LF" --agg "rfa" --bucketing $s --seed 0 --momentum 0 --op $op &
+            pids[$!]=$!
+
+            CUDA_VISIBLE_DEVICES=2 python exp9.py $COMMON_OPTIONS --attack "mimic" --agg "rfa" --bucketing $s --seed 0 --momentum 0 --op $op &
+            pids[$!]=$!
+
+            CUDA_VISIBLE_DEVICES=3 python exp9.py $COMMON_OPTIONS --attack "IPM" --agg "rfa" --bucketing $s --seed 0 --momentum 0 --op $op &
+            pids[$!]=$!
+
+            CUDA_VISIBLE_DEVICES=4 python exp9.py $COMMON_OPTIONS --attack "ALIE" --agg "rfa" --bucketing $s --seed 0 --momentum 0 --op $op &
+            pids[$!]=$!
+        done
+
+        # wait for all pids
+        for pid in ${pids[*]}; do
+            wait $pid
+        done
+        unset pids
+    done
+}
+
+
 PS3='Please enter your choice: '
-options=("debug" "exp1" "exp1_plot" "exp2" "exp2_plot" "exp3" "exp3_plot" "exp4" "exp4_plot" "exp5" "exp5_plot" "exp6" "exp6_plot" "exp7" "exp7_plot" "exp8" "exp8_plot" "Quit")
+options=("debug" "exp1" "exp1_plot" "exp2" "exp2_plot" "exp3" "exp3_plot" "exp4" "exp4_plot" "exp5" "exp5_plot" "exp6" "exp6_plot" "exp7" "exp7_plot" "exp8" "exp8_plot" "exp9" "exp9_plot" "Quit")
 select opt in "${options[@]}"
 do
     case $opt in
@@ -281,13 +312,24 @@ do
             python exp8.py $COMMON_OPTIONS --attack "LF" --agg "rfa" --plot
             ;;
 
+        "exp9")
+            run_exp9
+            ;;
+
+        "exp9_plot")
+            COMMON_OPTIONS="--use-cuda --identifier all -n 25 -f 5 --noniid"
+            python exp9.py $COMMON_OPTIONS --attack "LF" --agg "rfa" --plot
+            ;;
+
+
         "Quit")
             break
             ;;
 
         "debug")
             # python exp1.py --use-cuda --debug --identifier "exp1_debug" -n 10 -f 0 --attack NA --LT --noniid --agg rfa
-            python exp2.py --use-cuda --identifier debug -n 25 -f 5 --attack mimic --agg cm --noniid --debug
+            # python exp2.py --use-cuda --identifier debug -n 25 -f 5 --attack mimic --agg cm --noniid --debug
+            python exp9.py --use-cuda -n 20 -f 3 --noniid --attack "LF" --agg "rfa" --seed 0 --momentum 0 --op 8 --bucketing 2
             ;;
 
         *) 

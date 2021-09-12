@@ -1,4 +1,7 @@
-r"""Exp 8: Overparameterization
+r"""Exp 9: Overparameterization but compute value B
+
+Note that the code and setup is almost the same as exp8 except that we additionally compute the value B
+in equation (3).
 
 - Fix:
     - n=20, f=3
@@ -15,11 +18,14 @@ Experiment:
     - bucketing: 0, 2, 3
     - Model scale: 1, 2, 4, 8
 """
+import json
+import logging
 import torch.nn as nn
 import numpy as np
 import torch
 import torch.nn.functional as F
 
+from codes.worker import ByzantineWorker
 from utils import *
 
 args = get_args()
@@ -27,7 +33,7 @@ assert args.noniid
 assert not args.LT
 assert args.agg == "rfa"
 
-LOG_DIR = EXP_DIR + "exp8/"
+LOG_DIR = EXP_DIR + "exp9/"
 if args.identifier:
     LOG_DIR += f"{args.identifier}/"
 elif args.debug:
@@ -72,7 +78,43 @@ class ParameterizedNet(nn.Module):
         return output
 
 
-def exp8_main(args, LOG_DIR, EPOCHS, MAX_BATCHES_PER_EPOCH):
+json_logger = logging.getLogger("stats")
+
+
+def compute_heterogeneity_B(trainer, epoch, batch_idx):
+    global_gradient = sum(
+        w.get_gradient()
+        for _, w in enumerate(trainer.workers)
+        if not isinstance(w, ByzantineWorker)
+    ) / len(
+        [w for _, w in enumerate(trainer.workers) if not isinstance(w, ByzantineWorker)]
+    )
+
+    global_gradient_norm2 = (global_gradient.norm() ** 2).item()
+    msg = {
+        "_meta": {"type": "B"},
+        "E": epoch,
+        "B": batch_idx,
+        "global_gradient_norm2": global_gradient_norm2,
+        "gradient_differences": {},
+    }
+
+    s = 0
+    c = 0
+    for i, w in enumerate(trainer.workers):
+        if not isinstance(w, ByzantineWorker):
+            g = w.get_gradient()
+            v = ((g - global_gradient).norm() ** 2).item()
+            msg["gradient_differences"][i] = v
+            s += v
+            c += 1
+    s /= c
+    msg["B2"] = s / global_gradient_norm2
+
+    json_logger.info(json.dumps(msg))
+
+
+def exp9_main(args, LOG_DIR, EPOCHS, MAX_BATCHES_PER_EPOCH):
     initialize_logger(LOG_DIR)
 
     if args.use_cuda and not torch.cuda.is_available():
@@ -101,7 +143,7 @@ def exp8_main(args, LOG_DIR, EPOCHS, MAX_BATCHES_PER_EPOCH):
         server=server,
         aggregator=get_aggregator(args),
         pre_batch_hooks=[],
-        post_batch_hooks=[],
+        post_batch_hooks=[compute_heterogeneity_B],
         max_batches_per_epoch=MAX_BATCHES_PER_EPOCH,
         log_interval=args.log_interval,
         metrics=metrics,
@@ -168,7 +210,7 @@ def exp8_main(args, LOG_DIR, EPOCHS, MAX_BATCHES_PER_EPOCH):
 
 
 if not args.plot:
-    exp8_main(args, LOG_DIR, EPOCHS, MAX_BATCHES_PER_EPOCH)
+    exp9_main(args, LOG_DIR, EPOCHS, MAX_BATCHES_PER_EPOCH)
 else:
     # Temporarily put the import functions here to avoid
     # random error stops the running processes.
@@ -226,4 +268,4 @@ else:
         kind="line",
     )
     g.set(xlim=(0, 3000), ylim=(0, 1))
-    g.fig.savefig(OUT_DIR + "exp8.pdf", bbox_inches="tight")
+    g.fig.savefig(OUT_DIR + "exp9.pdf", bbox_inches="tight")

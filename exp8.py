@@ -223,6 +223,7 @@ else:
         aspect=1.3,
         # legend=False,
         # ci=None,
+        palette=sns.color_palette("Set1", 16),
         kind="line",
     )
     g.set(xlim=(0, 3000), ylim=(0, 1))

@@ -231,19 +231,23 @@ else:
         grid_identifier = f"{attack}_s{bucketing}_{op}_seed0"
         path = INP_DIR + grid_identifier + "/stats"
         try:
-            values = extract_validation_entries(path, kw="train evaluator")
+            values = extract_validation_entries(path, kw="B")
             for v in values:
+                iteration = (v["E"] - 1) * MAX_BATCHES_PER_EPOCH + v["B"]
+                if iteration % 10 != 0:
+                    continue
                 results.append(
                     {
-                        "Iterations": v["E"] * MAX_BATCHES_PER_EPOCH,
-                        "Train Loss": v["Loss"] if v["Loss"] != "nan" else np.inf,
+                        "Iterations": iteration,
+                        r"$||\nabla f(x)||^2$": v["global_gradient_norm2"],
+                        r"$B^2$": v["B2"],
                         "ATK": attack,
                         "Model Scale": str(op),
                         "s": str(bucketing),
                     }
                 )
         except Exception as e:
-            pass
+            raise
 
     results = pd.DataFrame(results)
     print(results)
@@ -252,11 +256,12 @@ else:
     if not os.path.exists(OUT_DIR):
         os.makedirs(OUT_DIR)
 
+    plt.figure()
     sns.set(font_scale=1.25)
     g = sns.relplot(
         data=results,
         x="Iterations",
-        y="Train Loss",
+        y=r"$B^2$",
         col="ATK",
         # style="Momentum",
         row="s",
@@ -265,7 +270,28 @@ else:
         aspect=1.3,
         # legend=False,
         # ci=None,
+        palette=sns.color_palette("Set1", 4),
         kind="line",
     )
-    g.set(xlim=(0, 3000), ylim=(0, 1))
-    g.fig.savefig(OUT_DIR + "exp9.pdf", bbox_inches="tight")
+    g.set(xlim=(0, 3000), ylim=(0, 50))
+    g.fig.savefig(OUT_DIR + "exp9_B2.pdf", bbox_inches="tight")
+
+    plt.figure()
+    sns.set(font_scale=1.25)
+    g = sns.relplot(
+        data=results,
+        x="Iterations",
+        y=r"$||\nabla f(x)||^2$",
+        col="ATK",
+        # style="Momentum",
+        row="s",
+        hue="Model Scale",
+        height=2.5,
+        aspect=1.3,
+        # legend=False,
+        # ci=None,
+        palette=sns.color_palette("Set1", 4),
+        kind="line",
+    )
+    g.set(xlim=(0, 3000), ylim=(0, 50))
+    g.fig.savefig(OUT_DIR + "exp9_norm2.pdf", bbox_inches="tight")

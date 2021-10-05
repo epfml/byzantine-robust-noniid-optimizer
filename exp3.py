@@ -53,6 +53,10 @@ else:
     import seaborn as sns
     from codes.parser import extract_validation_entries
 
+    # 5.5in is the text width of iclr2022 and 11 is the font size
+    font = {"size": 10}
+    plt.rc("font", **font)
+
     def exp_grid():
         for agg in ["krum", "cm", "cp", "rfa"]:
             for seed in [0, 1, 2]:
@@ -74,9 +78,10 @@ else:
                         "Accuracy (%)": v["top1"],
                         "ATK": attack,
                         "AGG": agg.upper() if agg != "cp" else "CClip",
-                        "Momentum": momentum,
+                        r"$\beta$": momentum,
                         "seed": seed,
-                        "Bucketing": str(bucketing),
+                        r"s": str(bucketing),
+                        # r"s": bucketing,
                     }
                 )
         except Exception as e:
@@ -90,20 +95,26 @@ else:
 
     results.to_csv(OUT_DIR + "exp3.csv", index=None)
 
-    sns.set(font_scale=1.7)
+    # sns.set(font_scale=1.7)
     g = sns.relplot(
         data=results,
         x="Iterations",
         y="Accuracy (%)",
-        style="Momentum",
+        style=r"$\beta$",
         col="ATK",
         row="AGG",
-        hue="Bucketing",
-        height=2.5,
-        aspect=2.0,
+        hue=r"s",
+        height=1.25,
+        aspect=2 / 1.25,
+        palette=sns.color_palette("Set1", 2),
         # legend=False,
         # ci=None,
         kind="line",
+        # facet_kws={"margin_titles": True},
     )
     g.set(xlim=(0, 600), ylim=(0, 100))
-    g.fig.savefig(OUT_DIR + "exp3.pdf", bbox_inches="tight")
+    g.set_axis_labels("Iterations", "Accuracy (%)")
+    g.set_titles(row_template="{row_name}", col_template="{col_name}")
+    g.fig.subplots_adjust(wspace=0.1)
+
+    g.fig.savefig(OUT_DIR + "exp3.pdf", bbox_inches="tight", dpi=720)

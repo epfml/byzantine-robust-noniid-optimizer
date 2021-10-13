@@ -60,6 +60,10 @@ else:
     import seaborn as sns
     from codes.parser import extract_validation_entries
 
+    # 5.5in is the text width of iclr2022 and 11 is the font size
+    font = {"size": 11}
+    plt.rc("font", **font)
+
     def exp_grid1():
         for seed in [0, 1, 2]:
             for bucketing in [0, 2, 5]:
@@ -77,9 +81,9 @@ else:
                     {
                         "Iterations": v["E"] * MAX_BATCHES_PER_EPOCH,
                         "Accuracy (%)": v["top1"],
-                        "Momentum": momentum,
+                        r"$\beta$": momentum,
                         "seed": seed,
-                        "Bucketing": str(bucketing),
+                        "s": str(bucketing),
                     }
                 )
         except Exception as e:
@@ -93,21 +97,24 @@ else:
 
     results.to_csv(OUT_DIR + "exp4_fix_f.csv", index=None)
 
-    plt.figure(figsize=(6, 3))
-    sns.set(font_scale=1.25)
+    plt.figure(figsize=(4, 2))
+    # sns.set(font_scale=1.25)
     g = sns.lineplot(
         data=results,
         x="Iterations",
         y="Accuracy (%)",
-        style="Momentum",
-        hue="Bucketing",
+        style=r"$\beta$",
+        hue="s",
         # height=2.5,
         # aspect=1.3,
         # legend=False,
         # ci=None,
+        palette=sns.color_palette("Set1", 3),
     )
-    g.set(xlim=(0, 600), ylim=(0, 100))
-    g.get_figure().savefig(OUT_DIR + "exp4_fix_f.pdf", bbox_inches="tight")
+    g.set(xlim=(0, 600), ylim=(50, 100))
+    # Put the legend out of the figure
+    g.legend(loc="center left", bbox_to_anchor=(1, 0.5))
+    g.get_figure().savefig(OUT_DIR + "exp4_fix_f.pdf", bbox_inches="tight", dpi=720)
 
     plt.figure(0)
 
@@ -128,7 +135,7 @@ else:
                     {
                         "Iterations": v["E"] * MAX_BATCHES_PER_EPOCH,
                         "Accuracy (%)": v["top1"],
-                        "Momentum": momentum,
+                        r"$\beta$": momentum,
                         "seed": seed,
                         "f": str(f),
                     }
@@ -144,18 +151,21 @@ else:
 
     results.to_csv(OUT_DIR + "exp4_fix_s.csv", index=None)
 
-    plt.figure(figsize=(6, 3))
-    sns.set(font_scale=1.25)
+    plt.figure(figsize=(4, 2))
+    # sns.set(font_scale=1.25)
     g = sns.lineplot(
         data=results,
         x="Iterations",
         y="Accuracy (%)",
-        style="Momentum",
+        style=r"$\beta$",
         hue="f",
+        palette=sns.color_palette("Set1", 3),
         # height=2.5,
         # aspect=2,
         # legend=False,
         # ci=None,
     )
-    g.set(xlim=(0, 600), ylim=(0, 100))
-    g.get_figure().savefig(OUT_DIR + "exp4_fix_s.pdf", bbox_inches="tight")
+    g.set(xlim=(0, 600), ylim=(50, 100))
+    # Put the legend out of the figure
+    g.legend(loc="center left", bbox_to_anchor=(1, 0.5))
+    g.get_figure().savefig(OUT_DIR + "exp4_fix_s.pdf", bbox_inches="tight", dpi=720)

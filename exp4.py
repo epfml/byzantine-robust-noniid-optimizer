@@ -137,7 +137,7 @@ else:
                         "Accuracy (%)": v["top1"],
                         r"$\beta$": momentum,
                         "seed": seed,
-                        "f": str(f),
+                        "q": str(f),
                     }
                 )
         except Exception as e:
@@ -158,7 +158,7 @@ else:
         x="Iterations",
         y="Accuracy (%)",
         style=r"$\beta$",
-        hue="f",
+        hue="q",
         palette=sns.color_palette("Set1", 3),
         # height=2.5,
         # aspect=2,

@@ -80,37 +80,44 @@ class ParameterizedNet(nn.Module):
 
 json_logger = logging.getLogger("stats")
 
-
-def compute_heterogeneity_B(trainer, epoch, batch_idx):
-    global_gradient = sum(
-        w.get_gradient()
-        for _, w in enumerate(trainer.workers)
-        if not isinstance(w, ByzantineWorker)
-    ) / len(
-        [w for _, w in enumerate(trainer.workers) if not isinstance(w, ByzantineWorker)]
-    )
-
+def compute_heterogeneity_B(trainer, epoch):
+    # Compute true gradient
+    worker_gradients = []
+    for i, w in enumerate(trainer.workers):
+        if not isinstance(w, ByzantineWorker):
+            # Initialize the train dataset iterator.
+            w.train_epoch_start()
+            g = None
+            try:
+                while True:
+                    w.compute_gradient()
+                    if g is None:
+                        g = w.get_gradient()
+                    else:
+                        g += w.get_gradient()
+            except StopIteration:
+                pass
+            worker_gradients.append(g)
+            print(f"Finish computing the gradient of worker {i}")
+    
+    global_gradient = sum(worker_gradients) / len(worker_gradients)
     global_gradient_norm2 = (global_gradient.norm() ** 2).item()
     msg = {
         "_meta": {"type": "B"},
         "E": epoch,
-        "B": batch_idx,
         "global_gradient_norm2": global_gradient_norm2,
         "gradient_differences": {},
     }
 
     s = 0
     c = 0
-    for i, w in enumerate(trainer.workers):
-        if not isinstance(w, ByzantineWorker):
-            g = w.get_gradient()
-            v = ((g - global_gradient).norm() ** 2).item()
-            msg["gradient_differences"][i] = v
-            s += v
-            c += 1
+    for g in worker_gradients:
+        v = ((g - global_gradient).norm() ** 2).item()
+        msg["gradient_differences"][i] = v
+        s += v
+        c += 1
     s /= c
     msg["B2"] = s / global_gradient_norm2
-
     json_logger.info(json.dumps(msg))
 
 
@@ -143,7 +150,7 @@ def exp9_main(args, LOG_DIR, EPOCHS, MAX_BATCHES_PER_EPOCH):
         server=server,
         aggregator=get_aggregator(args),
         pre_batch_hooks=[],
-        post_batch_hooks=[compute_heterogeneity_B],
+        post_batch_hooks=[],
         max_batches_per_epoch=MAX_BATCHES_PER_EPOCH,
         log_interval=args.log_interval,
         metrics=metrics,
@@ -206,6 +213,8 @@ def exp9_main(args, LOG_DIR, EPOCHS, MAX_BATCHES_PER_EPOCH):
             trainer.train(epoch)
             evaluator.evaluate(epoch)
             train_evaluator.evaluate(epoch)
+            compute_heterogeneity_B(trainer, epoch)
+
             trainer.parallel_call(lambda w: w.data_loader.sampler.set_epoch(epoch))
 
 

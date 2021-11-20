@@ -211,27 +211,27 @@ function run_exp9 {
     do
         for s in 0 2 3
         do
-            CUDA_VISIBLE_DEVICES=0 python exp9.py $COMMON_OPTIONS --attack "BF" --agg "rfa" --bucketing $s --seed 0 --momentum 0 --op $op &
+            python exp9.py $COMMON_OPTIONS --attack "BF" --agg "rfa" --bucketing $s --seed 0 --momentum 0 --op $op &
             pids[$!]=$!
 
-            CUDA_VISIBLE_DEVICES=1 python exp9.py $COMMON_OPTIONS --attack "LF" --agg "rfa" --bucketing $s --seed 0 --momentum 0 --op $op &
+            python exp9.py $COMMON_OPTIONS --attack "LF" --agg "rfa" --bucketing $s --seed 0 --momentum 0 --op $op &
             pids[$!]=$!
 
-            CUDA_VISIBLE_DEVICES=2 python exp9.py $COMMON_OPTIONS --attack "mimic" --agg "rfa" --bucketing $s --seed 0 --momentum 0 --op $op &
+            python exp9.py $COMMON_OPTIONS --attack "mimic" --agg "rfa" --bucketing $s --seed 0 --momentum 0 --op $op &
             pids[$!]=$!
 
-            CUDA_VISIBLE_DEVICES=3 python exp9.py $COMMON_OPTIONS --attack "IPM" --agg "rfa" --bucketing $s --seed 0 --momentum 0 --op $op &
+            python exp9.py $COMMON_OPTIONS --attack "IPM" --agg "rfa" --bucketing $s --seed 0 --momentum 0 --op $op &
             pids[$!]=$!
 
-            CUDA_VISIBLE_DEVICES=4 python exp9.py $COMMON_OPTIONS --attack "ALIE" --agg "rfa" --bucketing $s --seed 0 --momentum 0 --op $op &
+            python exp9.py $COMMON_OPTIONS --attack "ALIE" --agg "rfa" --bucketing $s --seed 0 --momentum 0 --op $op &
             pids[$!]=$!
+
+            # wait for all pids
+            for pid in ${pids[*]}; do
+                wait $pid
+            done
+            unset pids
         done
-
-        # wait for all pids
-        for pid in ${pids[*]}; do
-            wait $pid
-        done
-        unset pids
     done
 }
 
@@ -329,7 +329,7 @@ do
         "debug")
             # python exp1.py --use-cuda --debug --identifier "exp1_debug" -n 10 -f 0 --attack NA --LT --noniid --agg rfa
             # python exp2.py --use-cuda --identifier debug -n 25 -f 5 --attack mimic --agg cm --noniid --debug
-            python exp9.py --use-cuda -n 20 -f 3 --noniid --attack "LF" --agg "rfa" --seed 0 --momentum 0 --op 8 --bucketing 2
+            python exp10.py --use-cuda -n 8 -f 0 --agg "avg" --seed 0 --momentum 0.9 #--debug
             ;;
 
         *) 
